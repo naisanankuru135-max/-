@@ -1,7 +1,8 @@
 import { useMemo, useState, FormEvent } from 'react';
-import { Check, AlertTriangle, Clock, Plus, Trash2 } from 'lucide-react';
+import { Check, AlertTriangle, Clock, Plus, Trash2, CalendarPlus, Bell } from 'lucide-react';
 import { DealReminder, PoikatsuApp, ReminderKind } from '../types/poikatsu';
 import { REMINDER_KIND_LABELS, daysUntil } from '../data/presets';
+import { buildRemindersIcs, triggerTextDownload } from '../lib/exportHelpers';
 import { AppIcon } from './AppIcon';
 
 interface RemindersViewProps {
@@ -71,6 +72,7 @@ export function RemindersView({
   const [dueDate, setDueDate] = useState(() => futureDateStr(14));
   const [actionDetail, setActionDetail] = useState('');
   const [riskOrRewardText, setRiskOrRewardText] = useState('');
+  const [notifyFeedback, setNotifyFeedback] = useState('');
 
   const appMap = useMemo(() => {
     const map = new Map<string, PoikatsuApp>();
@@ -189,22 +191,86 @@ export function RemindersView({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left: Reminder List */}
         <div className="lg:col-span-8 space-y-4">
-          <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg overflow-x-auto max-w-full w-fit">
-            {filterTabs.map((tab) => (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg overflow-x-auto max-w-full w-fit">
+              {filterTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setFilter(tab.id)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    filter === tab.id
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
               <button
-                key={tab.id}
                 type="button"
-                onClick={() => setFilter(tab.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                  filter === tab.id
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
+                onClick={() => {
+                  const activeItems = reminders.filter((r) => !r.completed);
+                  if (activeItems.length === 0) {
+                    setNotifyFeedback('書き出す未完了リマインダーがありません。');
+                    return;
+                  }
+                  const ics = buildRemindersIcs(activeItems, appMap);
+                  triggerTextDownload(
+                    `poicho-reminders-${new Date().toISOString().slice(0, 10)}.ics`,
+                    ics,
+                    'text/calendar;charset=utf-8'
+                  );
+                  setNotifyFeedback(`未完了 ${activeItems.length} 件の .ics を書き出しました。`);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
               >
-                {tab.label}
+                <CalendarPlus className="w-3.5 h-3.5" />
+                <span>まとめてカレンダー登録 (.ics)</span>
               </button>
-            ))}
+              {typeof window !== 'undefined' && 'Notification' in window && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const perm = await Notification.requestPermission();
+                    if (perm !== 'granted') {
+                      setNotifyFeedback('ブラウザ通知が許可されていません。');
+                      return;
+                    }
+                    const soon = reminders.filter((r) => {
+                      if (r.completed) return false;
+                      const d = daysUntil(r.dueDate);
+                      return d !== null && d <= 5;
+                    });
+                    if (soon.length === 0) {
+                      new Notification('ポイ帳 リマインダー', {
+                        body: '5日以内に期限を迎える条件・解約案件はありません。',
+                      });
+                      setNotifyFeedback('通知テストを送信しました（直近5日以内の案件なし）。');
+                    } else {
+                      new Notification(`ポイ帳: 期限間近 ${soon.length} 件`, {
+                        body: soon.map((s) => `${s.dueDate}: ${s.title}`).join('\n'),
+                      });
+                      setNotifyFeedback(`期限間近 ${soon.length} 件の通知を送信しました。`);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
+                >
+                  <Bell className="w-3.5 h-3.5" />
+                  <span>通知確認</span>
+                </button>
+              )}
+            </div>
           </div>
+
+          {notifyFeedback && (
+            <p className="text-xs text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2">
+              {notifyFeedback}
+            </p>
+          )}
 
           <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
             {filtered.length === 0 ? (
@@ -324,15 +390,29 @@ export function RemindersView({
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => onDeleteReminder(item.id)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg transition-colors shrink-0 cursor-pointer"
-                      title="削除"
-                      aria-label={`${item.title}を削除`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const ics = buildRemindersIcs([item], appMap);
+                          triggerTextDownload(`${item.id}.ics`, ics, 'text/calendar;charset=utf-8');
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
+                        title="カレンダーに登録 (.ics)"
+                        aria-label={`${item.title}をカレンダーに登録`}
+                      >
+                        <CalendarPlus className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeleteReminder(item.id)}
+                        className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+                        title="削除"
+                        aria-label={`${item.title}を削除`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 );
               })

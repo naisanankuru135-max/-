@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Menu, Plus, ScanLine } from 'lucide-react';
 import {
   ActiveTab,
@@ -9,7 +9,21 @@ import {
   PointTransaction,
   TransactionType,
 } from './types/poikatsu';
-import { createInitialData, getTodayStr, pointsToYen } from './data/presets';
+import {
+  createEmptyData,
+  createInitialData,
+  getTodayStr,
+  isUntouchedSampleData,
+  pointsToYen,
+  PRESET_APP_TEMPLATES,
+} from './data/presets';
+import { isNativeMobileRuntime } from './lib/directAiClient';
+import {
+  AppUpdateInfo,
+  UPDATE_LAST_CHECK_KEY,
+  checkForAppUpdate,
+  installAppUpdate,
+} from './lib/appUpdater';
 import { Sidebar } from './components/Sidebar';
 import { DashboardView } from './components/DashboardView';
 import { AppsView } from './components/AppsView';
@@ -27,24 +41,38 @@ import {
 
 const STORAGE_KEY = 'poicho_store_v1';
 
+function migratePresetIcons(apps: PoikatsuApp[]): PoikatsuApp[] {
+  const presetByName = new Map(PRESET_APP_TEMPLATES.map((p) => [p.name, p.iconUrl]));
+  return apps.map((app) => {
+    if (app.iconUrl?.startsWith('data:image/svg+xml')) {
+      const officialUrl = presetByName.get(app.name);
+      if (officialUrl) return { ...app, iconUrl: officialUrl };
+    }
+    return app;
+  });
+}
+
 function loadInitialStore(): PoikatsuStoreData {
-  const defaults = createInitialData();
+  const empty = createEmptyData();
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaults;
+    if (!raw) return empty;
     const parsed = JSON.parse(raw) as Partial<PoikatsuStoreData>;
     if (!Array.isArray(parsed.apps) || !Array.isArray(parsed.transactions)) {
-      return defaults;
+      return empty;
+    }
+    if (isUntouchedSampleData(parsed)) {
+      return empty;
     }
     return {
-      apps: parsed.apps,
+      apps: migratePresetIcons(parsed.apps),
       transactions: parsed.transactions,
       routines: Array.isArray(parsed.routines) ? parsed.routines : [],
-      reminders: Array.isArray(parsed.reminders) ? parsed.reminders : defaults.reminders,
-      monthlyGoalYen: Number(parsed.monthlyGoalYen) || 15000,
+      reminders: Array.isArray(parsed.reminders) ? parsed.reminders : [],
+      monthlyGoalYen: Number(parsed.monthlyGoalYen) || 10000,
     };
   } catch {
-    return defaults;
+    return empty;
   }
 }
 
@@ -80,6 +108,68 @@ export default function App() {
 
   // Transient feedback toast
   const [toast, setToast] = useState<string | null>(null);
+  const [availableUpdate, setAvailableUpdate] = useState<AppUpdateInfo | null>(null);
+  const [installingApk, setInstallingApk] = useState(false);
+  const serverSyncReadyRef = useRef(false);
+  const skipNextServerPushRef = useRef(false);
+
+  // Silent background check for APK updates (at most once per 12h)
+  useEffect(() => {
+    if (!isNativeMobileRuntime()) return;
+    try {
+      const last = Number(localStorage.getItem(UPDATE_LAST_CHECK_KEY) || 0);
+      if (Date.now() - last < 12 * 60 * 60 * 1000) return;
+      localStorage.setItem(UPDATE_LAST_CHECK_KEY, String(Date.now()));
+    } catch {
+      // Ignore
+    }
+    checkForAppUpdate()
+      .then((info) => {
+        if (info.hasUpdate) setAvailableUpdate(info);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Sync with PC server file store (data/store.json) when available; fallback silently to localStorage on mobile APK
+  useEffect(() => {
+    if (isNativeMobileRuntime()) return;
+    let cancelled = false;
+    fetch('/api/store')
+      .then((res) => (res.ok ? (res.json() as Promise<{ exists?: boolean; data?: Partial<PoikatsuStoreData> }>) : null))
+      .then((payload) => {
+        if (cancelled || !payload) return;
+        if (
+          payload.exists &&
+          payload.data &&
+          Array.isArray(payload.data.apps) &&
+          Array.isArray(payload.data.transactions)
+        ) {
+          skipNextServerPushRef.current = true;
+          setStore({
+            apps: payload.data.apps,
+            transactions: payload.data.transactions,
+            routines: Array.isArray(payload.data.routines) ? payload.data.routines : [],
+            reminders: Array.isArray(payload.data.reminders) ? payload.data.reminders : [],
+            monthlyGoalYen: Number(payload.data.monthlyGoalYen) || 15000,
+          });
+        } else {
+          // Seed server file from current localStorage/default store
+          void fetch('/api/store', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(store),
+          }).catch(() => {});
+        }
+        serverSyncReadyRef.current = true;
+      })
+      .catch(() => {
+        // Running as static bundle without Express server
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     try {
@@ -87,6 +177,21 @@ export default function App() {
     } catch {
       // Ignore storage quota errors gracefully
     }
+
+    if (isNativeMobileRuntime() || !serverSyncReadyRef.current) return;
+    if (skipNextServerPushRef.current) {
+      skipNextServerPushRef.current = false;
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void fetch('/api/store', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(store),
+      }).catch(() => {});
+    }, 350);
+    return () => window.clearTimeout(timer);
   }, [store]);
 
   useEffect(() => {
@@ -344,9 +449,16 @@ export default function App() {
       id: `tx-ai-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 5)}`,
     }));
 
+    const newReminders: DealReminder[] = (payload.reminders ?? []).map((r, idx) => ({
+      ...r,
+      id: `rem-ai-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 5)}`,
+      completed: false,
+    }));
+
     setStore((prev) => ({
       ...prev,
       transactions: [...newTxs, ...prev.transactions],
+      reminders: [...newReminders, ...prev.reminders],
       apps: prev.apps.map((app) => {
         if (app.id !== payload.appId) return app;
         let nextConfirmed = app.confirmedPoints;
@@ -385,6 +497,9 @@ export default function App() {
     }
     if (newTxs.length > 0) {
       parts.push(`履歴 ${newTxs.length} 件を追加`);
+    }
+    if (newReminders.length > 0) {
+      parts.push(`期限リマインダー ${newReminders.length} 件を追加`);
     }
     showToast(`スクショ読取結果を反映しました（${parts.join('・') || '更新完了'}）`);
   };
@@ -468,6 +583,56 @@ export default function App() {
 
         {/* Main Content Viewport */}
         <main className="flex-1 px-4 sm:px-8 py-6 sm:py-8 max-w-[1280px] w-full mx-auto">
+          {availableUpdate && (
+            <div className="mb-5 p-3.5 rounded-xl bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
+              <div className="text-xs">
+                <span className="font-semibold">
+                  新しいバージョン v{availableUpdate.latestVersion} が配信されています
+                </span>
+                {availableUpdate.releaseNotes && (
+                  <span className="ml-2 text-slate-300 hidden sm:inline">
+                    {availableUpdate.releaseNotes.slice(0, 60)}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={installingApk}
+                  onClick={async () => {
+                    setInstallingApk(true);
+                    try {
+                      const res = await installAppUpdate(
+                        availableUpdate.apkUrl,
+                        availableUpdate.htmlUrl
+                      );
+                      if (res.status === 'needs_permission') {
+                        showToast('不明なアプリのインストールを許可して再度お試しください');
+                      } else if (res.status === 'installing') {
+                        showToast('インストーラーを起動しました');
+                      }
+                    } catch (err) {
+                      showToast(
+                        err instanceof Error ? err.message : 'アップデートに失敗しました'
+                      );
+                    } finally {
+                      setInstallingApk(false);
+                    }
+                  }}
+                  className="px-3 py-1.5 text-xs font-semibold bg-white text-slate-900 rounded-lg hover:bg-slate-100 disabled:opacity-50 cursor-pointer"
+                >
+                  {installingApk ? 'ダウンロード中...' : '今すぐ更新'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAvailableUpdate(null)}
+                  className="text-xs text-slate-400 hover:text-white px-1.5 cursor-pointer"
+                >
+                  後で
+                </button>
+              </div>
+            </div>
+          )}
           {activeTab === 'dashboard' && (
             <DashboardView
               apps={store.apps}
@@ -563,12 +728,14 @@ export default function App() {
         onClose={() => setBackupModalOpen(false)}
         onUpdateGoal={(goalYen) => setStore((prev) => ({ ...prev, monthlyGoalYen: goalYen }))}
         onImportData={(nextData) => setStore(nextData)}
-        onResetSample={() => setStore(createInitialData())}
+        onResetEmpty={() => setStore(createEmptyData())}
+        onLoadSample={() => setStore(createInitialData())}
       />
 
       <ScreenshotImportModal
         open={screenshotModalOpen}
         apps={store.apps}
+        existingTransactions={store.transactions}
         onClose={() => setScreenshotModalOpen(false)}
         onApply={handleApplyScreenshot}
       />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, ChangeEvent, FormEvent } from 'react';
-import { X, Upload, Check, Trash2 } from 'lucide-react';
+import { X, Upload, Check, Trash2, Search } from 'lucide-react';
 import { AppCategory, PoikatsuApp, PresetAppTemplate } from '../types/poikatsu';
 import { APP_CATEGORY_LABELS, PRESET_APP_TEMPLATES } from '../data/presets';
 import { AppIcon } from './AppIcon';
@@ -65,6 +65,8 @@ export function AppFormModal({
 }: AppFormModalProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [mode, setMode] = useState<'preset' | 'form'>('preset');
+  const [presetQuery, setPresetQuery] = useState('');
+  const [presetCategory, setPresetCategory] = useState<'all' | AppCategory>('all');
   const [name, setName] = useState('');
   const [shortName, setShortName] = useState('');
   const [category, setCategory] = useState<AppCategory>('point_site');
@@ -109,8 +111,8 @@ export function AppFormModal({
       setBrandColor(PRESET_APP_TEMPLATES[0].brandColor);
       setUnit('P');
       setPointsPerYen('1');
-      setConfirmedPoints('0');
-      setPendingPoints('0');
+      setConfirmedPoints('');
+      setPendingPoints('');
       setMinExchangePoints('300');
       setExpiryDate('');
       setSiteUrl('');
@@ -225,10 +227,49 @@ export function AppFormModal({
         {mode === 'preset' && !editingApp ? (
           <div className="p-6 space-y-4">
             <p className="text-xs text-slate-500">
-              追加したいアプリを選ぶと、アイコン画像・換算レート・最低交換ポイントが自動入力されます（追加後にカスタマイズも可能です）。
+              追加したいアプリを選ぶと、公式アイコン・換算レート・最低交換ポイントが自動入力されます（追加後にカスタマイズも可能です）。
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {PRESET_APP_TEMPLATES.map((preset) => {
+            <div className="space-y-2.5">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="search"
+                  value={presetQuery}
+                  onChange={(e) => setPresetQuery(e.target.value)}
+                  placeholder="サイト・アプリ名で検索（例: Freecash, Mistplay, モッピー）"
+                  className="w-full pl-8 pr-3 py-2 text-xs bg-white border border-slate-200 rounded-lg text-slate-900"
+                />
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {(['all', 'point_site', 'walk_move', 'common_point', 'receipt_survey', 'other'] as const).map(
+                  (cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setPresetCategory(cat)}
+                      className={`px-2.5 py-1 text-[11px] font-medium rounded-md border transition-colors cursor-pointer ${
+                        presetCategory === cat
+                          ? 'bg-slate-900 text-white border-slate-900'
+                          : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      {cat === 'all' ? `すべて (${PRESET_APP_TEMPLATES.length})` : APP_CATEGORY_LABELS[cat]}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-1">
+              {PRESET_APP_TEMPLATES.filter((preset) => {
+                if (presetCategory !== 'all' && preset.category !== presetCategory) return false;
+                const q = presetQuery.trim().toLowerCase();
+                if (!q) return true;
+                return (
+                  preset.name.toLowerCase().includes(q) ||
+                  preset.shortName.toLowerCase().includes(q) ||
+                  preset.description.toLowerCase().includes(q)
+                );
+              }).map((preset) => {
                 const alreadyAdded = existingNames.has(preset.name);
                 return (
                   <button
@@ -461,6 +502,7 @@ export function AppFormModal({
                   type="number"
                   min={0}
                   value={confirmedPoints}
+                  placeholder="0"
                   onChange={(e) => setConfirmedPoints(e.target.value)}
                   className="w-full px-3 py-2 text-xs font-mono tabular-nums bg-white border border-slate-200 rounded-lg text-slate-900"
                 />
@@ -475,6 +517,7 @@ export function AppFormModal({
                   type="number"
                   min={0}
                   value={pendingPoints}
+                  placeholder="0"
                   onChange={(e) => setPendingPoints(e.target.value)}
                   className="w-full px-3 py-2 text-xs font-mono tabular-nums bg-white border border-slate-200 rounded-lg text-slate-900"
                 />

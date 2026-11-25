@@ -75,6 +75,14 @@ export interface ParsedScreenshotTransaction {
   note?: string;
 }
 
+export interface ParsedScreenshotReminder {
+  title: string;
+  kind: ReminderKind;
+  dueDate: string; // YYYY-MM-DD
+  actionDetail: string;
+  riskOrRewardText?: string;
+}
+
 export interface ParsedScreenshotResult {
   detectedAppName: string;
   matchedAppId: string;
@@ -85,6 +93,7 @@ export interface ParsedScreenshotResult {
   expiryDate?: string;
   summary: string;
   transactions: ParsedScreenshotTransaction[];
+  reminders?: ParsedScreenshotReminder[];
 }
 
 export type ActiveTab = 'dashboard' | 'apps' | 'ledger' | 'reminders' | 'simulator' | 'routine';
@@ -95,4 +104,40 @@ export interface PoikatsuStoreData {
   routines: DailyRoutine[];
   reminders: DealReminder[];
   monthlyGoalYen: number;
+}
+
+export type AiConcreteProviderId =
+  | 'gemini'
+  | 'vertex_project'
+  | 'vertex_express'
+  | 'openai'
+  | 'anthropic'
+  | 'opencode'
+  | 'opencode_go'
+  | 'openai_compatible';
+
+export type AiProviderSelection = 'auto' | AiConcreteProviderId;
+
+export interface AiRequestConfig {
+  provider: AiProviderSelection;
+  apiKey?: string;
+  model?: string;
+  project?: string;
+  location?: string;
+  baseUrl?: string;
+}
+
+export interface AiServerStatus {
+  preferredProvider: AiConcreteProviderId | null;
+  configuredProviders: AiConcreteProviderId[];
+  defaults: Record<
+    AiConcreteProviderId,
+    {
+      hasCredentials: boolean;
+      model: string;
+      project?: string;
+      location?: string;
+      baseUrl?: string;
+    }
+  >;
 }

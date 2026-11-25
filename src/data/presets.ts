@@ -14,7 +14,7 @@ export const REMINDER_KIND_LABELS: Record<ReminderKind, string> = {
   campaign: 'キャンペーン・交換期限',
 };
 
-// Generated high-fidelity app icon assets
+// Official app icon assets downloaded locally in src/assets/images/
 export const GENERATED_ICONS = {
   moppy: '/src/assets/images/icon_moppy_1795597785040.jpg',
   hapitas: '/src/assets/images/icon_hapitas_1795597786938.jpg',
@@ -26,38 +26,30 @@ export const GENERATED_ICONS = {
   vpoint: '/src/assets/images/icon_vpoint_1795597794563.jpg',
 } as const;
 
-// Clean vector data-URI icons for additional popular Japanese point apps
-function makeSvgIcon(bg: string, accent: string, symbolPath: string): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-    <rect width="128" height="128" fill="${bg}"/>
-    <circle cx="64" cy="64" r="44" fill="${accent}" fill-opacity="0.16"/>
-    ${symbolPath}
-  </svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}
-
 export const EXTRA_VECTOR_ICONS = {
-  paypay: makeSvgIcon(
-    '#FF0033',
-    '#FFFFFF',
-    `<path d="M44 32h24c14.4 0 24 8.6 24 21.5S82.4 75 68 75H57v21H44V32zm13 31h10.5c7.2 0 11.5-3.6 11.5-9.5S74.7 44 67.5 44H57v19z" fill="#FFFFFF"/><circle cx="88" cy="86" r="10" fill="#FFE600"/>`
-  ),
-  dpoint: makeSvgIcon(
-    '#CC0033',
-    '#FFFFFF',
-    `<circle cx="64" cy="64" r="36" fill="#FFFFFF"/><path d="M74 39v48h-10v-5c-3 4-7.5 6-13 6-11.5 0-19.5-8.5-19.5-20s8-20 19.5-20c5.5 0 10 2 13 6V39h10zm-21 19c-6 0-10.5 4.2-10.5 10s4.5 10 10.5 10 10.5-4.2 10.5-10-4.5-10-10.5-10z" fill="#CC0033"/>`
-  ),
-  ponta: makeSvgIcon(
-    '#F07D00',
-    '#1D2088',
-    `<circle cx="64" cy="64" r="38" fill="#1D2088"/><path d="M48 38h19c12.5 0 21 7.2 21 18.5S79.5 75 67 75H59v17H48V38zm11 27h7.5c6 0 10-3 10-8.5s-4-8.5-10-8.5H59v17z" fill="#FFFFFF"/><circle cx="85" cy="84" r="8" fill="#FFD400"/>`
-  ),
-  ecnavi: makeSvgIcon(
-    '#0068B7',
-    '#FFFFFF',
-    `<circle cx="64" cy="64" r="36" fill="none" stroke="#FFFFFF" stroke-width="7"/><polygon points="64,34 74,64 64,94 54,64" fill="#FFCC00"/><circle cx="64" cy="64" r="6" fill="#0068B7"/>`
-  ),
-};
+  paypay: '/src/assets/images/icon_paypay.jpg',
+  dpoint: '/src/assets/images/icon_dpoint.jpg',
+  ponta: '/src/assets/images/icon_ponta.jpg',
+  ecnavi: '/src/assets/images/icon_ecnavi.jpg',
+  freecash: '/src/assets/images/icon_freecash.jpg',
+  mistplay: '/src/assets/images/icon_mistplay.jpg',
+  powl: '/src/assets/images/icon_powl.jpg',
+  kurashiru: '/src/assets/images/icon_kurashiru.jpg',
+  one: '/src/assets/images/icon_one.jpg',
+  tiktoklite: '/src/assets/images/icon_tiktoklite.jpg',
+  prally: '/src/assets/images/icon_prally.jpg',
+  macromill: '/src/assets/images/icon_macromill.jpg',
+  code: '/src/assets/images/icon_code.jpg',
+  amefri: '/src/assets/images/icon_amefri.jpg',
+  pointtown: '/src/assets/images/icon_pointtown.jpg',
+  pui: '/src/assets/images/icon_pui.jpg',
+  nifty: '/src/assets/images/icon_nifty.png',
+  gendama: '/src/assets/images/icon_gendama.png',
+  cokeon: '/src/assets/images/icon_cokeon.jpg',
+  cashwalk: '/src/assets/images/icon_cashwalk.jpg',
+  rakuten_sps: '/src/assets/images/icon_rakuten_sps.jpg',
+  mercari: '/src/assets/images/icon_mercari.jpg',
+} as const;
 
 export const PRESET_APP_TEMPLATES: PresetAppTemplate[] = [
   {
@@ -216,6 +208,240 @@ export const PRESET_APP_TEMPLATES: PresetAppTemplate[] = [
     siteUrl: 'https://ecnavi.jp/',
     description: '10pts = 1円 · PeX経由で多彩な交換先に対応',
   },
+  {
+    key: 'freecash',
+    name: 'Freecash',
+    shortName: 'Freecash',
+    category: 'point_site',
+    iconUrl: EXTRA_VECTOR_ICONS.freecash,
+    brandColor: '#01D676',
+    unit: 'コイン',
+    pointsPerYen: 6.7,
+    minExchangePoints: 5000,
+    siteUrl: 'https://freecash.com/',
+    description: '1,000コイン ≒ $1（約150円）· 海外高単価オファー・ゲーム案件',
+  },
+  {
+    key: 'mistplay',
+    name: 'Mistplay',
+    shortName: 'Mistplay',
+    category: 'other',
+    iconUrl: EXTRA_VECTOR_ICONS.mistplay,
+    brandColor: '#12B5B0',
+    unit: 'ユニット',
+    pointsPerYen: 3.5,
+    minExchangePoints: 1800,
+    siteUrl: 'https://www.mistplay.com/',
+    description: '約3.5ユニット = 1円 · ゲームプレイでギフト券・PayPay獲得',
+  },
+  {
+    key: 'powl',
+    name: 'Powl（ポール）',
+    shortName: 'Powl',
+    category: 'walk_move',
+    iconUrl: EXTRA_VECTOR_ICONS.powl,
+    brandColor: '#FF5E7E',
+    unit: 'pt',
+    pointsPerYen: 10,
+    minExchangePoints: 500,
+    siteUrl: 'https://powl.jp/',
+    description: '10pt = 1円 · 移動・歩数・2択アンケートでコツコツ貯まる',
+  },
+  {
+    key: 'kurashiru',
+    name: 'クラシルリワード',
+    shortName: 'クラシル',
+    category: 'walk_move',
+    iconUrl: EXTRA_VECTOR_ICONS.kurashiru,
+    brandColor: '#FF9800',
+    unit: 'コイン',
+    pointsPerYen: 100,
+    minExchangePoints: 33000,
+    siteUrl: 'https://www.rewards.kurashiru.com/',
+    description: '100コイン = 1円 · 移動・チラシ・レシート対応（旧レシチャレ）',
+  },
+  {
+    key: 'one',
+    name: 'ONE（レシート買取）',
+    shortName: 'ONE',
+    category: 'receipt_survey',
+    iconUrl: EXTRA_VECTOR_ICONS.one,
+    brandColor: '#111827',
+    unit: '円',
+    pointsPerYen: 1,
+    minExchangePoints: 300,
+    siteUrl: 'https://wow.one/app',
+    description: '1円 = 1円 · レシート撮影・買い物でそのまま残高が貯まる',
+  },
+  {
+    key: 'tiktoklite',
+    name: 'TikTok Lite',
+    shortName: 'TikTokLite',
+    category: 'other',
+    iconUrl: EXTRA_VECTOR_ICONS.tiktoklite,
+    brandColor: '#FE2C55',
+    unit: 'pt',
+    pointsPerYen: 100,
+    minExchangePoints: 10000,
+    siteUrl: 'https://lite.tiktok.com/',
+    description: '100pt = 1円 · 連続チェックイン・動画視聴タスクが強力',
+  },
+  {
+    key: 'prally',
+    name: 'プラリー',
+    shortName: 'プラリー',
+    category: 'walk_move',
+    iconUrl: EXTRA_VECTOR_ICONS.prally,
+    brandColor: '#00C4CC',
+    unit: 'スコア',
+    pointsPerYen: 120,
+    minExchangePoints: 36000,
+    siteUrl: 'https://www.prally.com/',
+    description: '約120スコア = 1円 · 移動・チェックインでPonta等に交換',
+  },
+  {
+    key: 'macromill',
+    name: 'マクロミル',
+    shortName: 'マクロミル',
+    category: 'receipt_survey',
+    iconUrl: EXTRA_VECTOR_ICONS.macromill,
+    brandColor: '#009E96',
+    unit: 'P',
+    pointsPerYen: 1,
+    minExchangePoints: 500,
+    siteUrl: 'https://www.macromill.com/',
+    description: '1P = 1円 · 配信数が多い国内最大手アンケートサイト',
+  },
+  {
+    key: 'code',
+    name: 'CODE（レシート）',
+    shortName: 'CODE',
+    category: 'receipt_survey',
+    iconUrl: EXTRA_VECTOR_ICONS.code,
+    brandColor: '#F97316',
+    unit: 'pt',
+    pointsPerYen: 1,
+    minExchangePoints: 300,
+    siteUrl: 'https://code.one-financial.jp/',
+    description: '1pt = 1円 · レシート＋バーコードスキャンで貯まる',
+  },
+  {
+    key: 'amefri',
+    name: 'アメフリ',
+    shortName: 'アメフリ',
+    category: 'point_site',
+    iconUrl: EXTRA_VECTOR_ICONS.amefri,
+    brandColor: '#2563EB',
+    unit: 'pt',
+    pointsPerYen: 10,
+    minExchangePoints: 4000,
+    siteUrl: 'https://www.amefri.net/',
+    description: '10pt = 1円 · 高還元案件・口座開設・クレカ案件が豊富',
+  },
+  {
+    key: 'pointtown',
+    name: 'ポイントタウン',
+    shortName: 'ポイタウン',
+    category: 'point_site',
+    iconUrl: EXTRA_VECTOR_ICONS.pointtown,
+    brandColor: '#FF4B77',
+    unit: 'コイン',
+    pointsPerYen: 1,
+    minExchangePoints: 100,
+    siteUrl: 'https://www.pointtown.com/',
+    description: '1コイン = 1円 · GMO運営・歩数機能やランク特典あり',
+  },
+  {
+    key: 'pui',
+    name: 'PUI（歩数ポイ活）',
+    shortName: 'PUI',
+    category: 'walk_move',
+    iconUrl: EXTRA_VECTOR_ICONS.pui,
+    brandColor: '#F59E0B',
+    unit: 'ポイント',
+    pointsPerYen: 11,
+    minExchangePoints: 3300,
+    siteUrl: 'https://pui.life/',
+    description: '約11pt = 1円 · 歩く・チェックインで気軽に貯まる',
+  },
+  {
+    key: 'nifty',
+    name: 'ニフティポイントクラブ',
+    shortName: 'ニフティ',
+    category: 'point_site',
+    iconUrl: EXTRA_VECTOR_ICONS.nifty,
+    brandColor: '#0066CC',
+    unit: 'P',
+    pointsPerYen: 1,
+    minExchangePoints: 500,
+    siteUrl: 'https://lifemedia.jp/',
+    description: '1P = 1円 · ノジ活（1.5倍）・ニフ活で高還元',
+  },
+  {
+    key: 'gendama',
+    name: 'げん玉',
+    shortName: 'げん玉',
+    category: 'point_site',
+    iconUrl: EXTRA_VECTOR_ICONS.gendama,
+    brandColor: '#FF7A00',
+    unit: 'pt',
+    pointsPerYen: 10,
+    minExchangePoints: 3000,
+    siteUrl: 'https://www.gendama.jp/',
+    description: '10pt = 1円 · 老舗ポイントサイト・利息システムあり',
+  },
+  {
+    key: 'cashwalk',
+    name: 'Cashwalk',
+    shortName: 'Cashwalk',
+    category: 'walk_move',
+    iconUrl: EXTRA_VECTOR_ICONS.cashwalk,
+    brandColor: '#FACC15',
+    unit: 'コイン',
+    pointsPerYen: 4,
+    minExchangePoints: 1200,
+    siteUrl: 'https://cashwalk.io/',
+    description: '約4コイン = 1円 · 歩数カウントでギフト券に交換',
+  },
+  {
+    key: 'cokeon',
+    name: 'Coke ON',
+    shortName: 'Coke ON',
+    category: 'other',
+    iconUrl: EXTRA_VECTOR_ICONS.cokeon,
+    brandColor: '#E11D48',
+    unit: 'スタンプ',
+    pointsPerYen: 0.1,
+    minExchangePoints: 15,
+    siteUrl: 'https://c.cocacola.co.jp/app/',
+    description: '15スタンプ = ドリンク1本（約150円相当）',
+  },
+  {
+    key: 'rakuten_sps',
+    name: '楽天スーパーポイントスクリーン',
+    shortName: '楽天SPS',
+    category: 'other',
+    iconUrl: EXTRA_VECTOR_ICONS.rakuten_sps,
+    brandColor: '#BF0000',
+    unit: 'P',
+    pointsPerYen: 1,
+    minExchangePoints: 1,
+    siteUrl: 'https://screen.rakuten.co.jp/',
+    description: '1P = 1円 · 広告タップで毎日楽天ポイント獲得',
+  },
+  {
+    key: 'mercari',
+    name: 'メルカリ（メルペイポイント）',
+    shortName: 'メルカリ',
+    category: 'common_point',
+    iconUrl: EXTRA_VECTOR_ICONS.mercari,
+    brandColor: '#FF0211',
+    unit: 'P',
+    pointsPerYen: 1,
+    minExchangePoints: 1,
+    siteUrl: 'https://www.mercari.com/jp/',
+    description: '1P = 1円 · キャンペーン・招待・メルペイ決済で貯まる・使える',
+  },
 ];
 
 // Helper to get relative YYYY-MM-DD dates from today
@@ -238,6 +464,30 @@ function monthsAgoDate(monthsAgo: number, day = 15): string {
   const maxDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
   d.setDate(Math.min(day, maxDay));
   return d.toISOString().slice(0, 10);
+}
+
+export function createEmptyData(): PoikatsuStoreData {
+  return {
+    monthlyGoalYen: 10000,
+    apps: [],
+    transactions: [],
+    routines: [],
+    reminders: [],
+  };
+}
+
+export function isUntouchedSampleData(data: Partial<PoikatsuStoreData>): boolean {
+  if (!Array.isArray(data.apps) || !Array.isArray(data.transactions)) return false;
+  if (data.apps.length !== 8) return false;
+  const moppy = data.apps.find((a) => a.id === 'app-moppy');
+  const hapitas = data.apps.find((a) => a.id === 'app-hapitas');
+  const hasSampleTx = data.transactions.some((t) => t.id === 'tx-1');
+  return Boolean(
+    moppy?.confirmedPoints === 14820 &&
+      moppy?.pendingPoints === 12000 &&
+      hapitas?.confirmedPoints === 8640 &&
+      hasSampleTx
+  );
 }
 
 export function createInitialData(): PoikatsuStoreData {

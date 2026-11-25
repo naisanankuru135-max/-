@@ -1,0 +1,16 @@
+{
+  "name": "ポイ帳 - ポイ活管理アプリ",
+  "short_name": "ポイ帳",
+  "description": "各ポイ活アプリの保有ポイント・円換算額・判定中案件・毎日ルーティンを一元管理",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F8FA",
+  "theme_color": "#0F172A",
+  "icons": [
+    {
+      "src": "/src/assets/images/icon_moppy_1795597785040.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

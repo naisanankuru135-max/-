@@ -42,7 +42,8 @@ export function ExchangeSimulatorView({
     apps.filter((a) => a.category === 'point_site' || a.category === 'walk_move').map((a) => a.id)
   );
   const [includePending, setIncludePending] = useState(false);
-  const [manualYen, setManualYen] = useState('20000');
+  const [onlyExchangeable, setOnlyExchangeable] = useState(false);
+  const [manualYen, setManualYen] = useState('');
 
   // Tunable campaign parameters
   const [dPointBonusPct, setDPointBonusPct] = useState<number>(10);
@@ -63,11 +64,16 @@ export function ExchangeSimulatorView({
     }
     return apps.reduce((sum, app) => {
       if (!selectedAppIds.includes(app.id)) return sum;
+      const effectivePoints =
+        app.confirmedPoints + (includePending ? app.pendingPoints : 0);
+      if (onlyExchangeable && app.minExchangePoints > 0 && effectivePoints < app.minExchangePoints) {
+        return sum;
+      }
       const confirmed = pointsToYen(app.confirmedPoints, app.pointsPerYen);
       const pending = includePending ? pointsToYen(app.pendingPoints, app.pointsPerYen) : 0;
       return sum + confirmed + pending;
     }, 0);
-  }, [sourceMode, manualYen, apps, selectedAppIds, includePending]);
+  }, [sourceMode, manualYen, apps, selectedAppIds, includePending, onlyExchangeable]);
 
   const routes = useMemo<SimulatedRoute[]>(() => {
     const welkatsuYen = Math.floor(baseYen * 1.5);
@@ -196,16 +202,27 @@ export function ExchangeSimulatorView({
 
           {sourceMode === 'apps' ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <label className="inline-flex items-center gap-2 text-slate-600 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={includePending}
-                    onChange={(e) => setIncludePending(e.target.checked)}
-                    className="w-3.5 h-3.5 rounded border-slate-300 accent-slate-900 cursor-pointer"
-                  />
-                  <span>判定中ポイントも含める</span>
-                </label>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="inline-flex items-center gap-2 text-slate-600 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={includePending}
+                      onChange={(e) => setIncludePending(e.target.checked)}
+                      className="w-3.5 h-3.5 rounded border-slate-300 accent-slate-900 cursor-pointer"
+                    />
+                    <span>判定中ポイントも含める</span>
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-slate-600 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={onlyExchangeable}
+                      onChange={(e) => setOnlyExchangeable(e.target.checked)}
+                      className="w-3.5 h-3.5 rounded border-slate-300 accent-slate-900 cursor-pointer"
+                    />
+                    <span>最低交換額に達したアプリのみ</span>
+                  </label>
+                </div>
                 <div className="flex items-center gap-2.5 text-[11px]">
                   <button
                     type="button"
@@ -227,6 +244,12 @@ export function ExchangeSimulatorView({
               <div className="divide-y divide-slate-100 border border-slate-200 rounded-lg max-h-64 overflow-y-auto">
                 {apps.map((app) => {
                   const checked = selectedAppIds.includes(app.id);
+                  const effectivePoints =
+                    app.confirmedPoints + (includePending ? app.pendingPoints : 0);
+                  const belowMin =
+                    app.minExchangePoints > 0 && effectivePoints < app.minExchangePoints;
+                  const shortPoints = Math.max(0, app.minExchangePoints - effectivePoints);
+                  const excludedByMin = checked && onlyExchangeable && belowMin;
                   const appYen =
                     pointsToYen(app.confirmedPoints, app.pointsPerYen) +
                     (includePending ? pointsToYen(app.pendingPoints, app.pointsPerYen) : 0);
@@ -236,7 +259,11 @@ export function ExchangeSimulatorView({
                       type="button"
                       onClick={() => toggleApp(app.id)}
                       className={`w-full px-3 py-2.5 flex items-center justify-between gap-3 text-left transition-colors cursor-pointer ${
-                        checked ? 'bg-slate-50' : 'bg-white hover:bg-slate-50/50'
+                        checked
+                          ? excludedByMin
+                            ? 'bg-amber-50/60'
+                            : 'bg-slate-50'
+                          : 'bg-white hover:bg-slate-50/50'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -259,10 +286,19 @@ export function ExchangeSimulatorView({
                           <p className="text-xs font-medium text-slate-900 truncate">{app.name}</p>
                           <p className="text-[11px] font-mono tabular-nums text-slate-400">
                             {formatPoints(app.confirmedPoints, app.unit)}
+                            {belowMin && (
+                              <span className="ml-1.5 text-amber-700 font-sans">
+                                （最低交換まであと {formatPoints(shortPoints, app.unit)}）
+                              </span>
+                            )}
                           </p>
                         </div>
                       </div>
-                      <span className="text-xs font-mono tabular-nums font-semibold text-slate-900 shrink-0">
+                      <span
+                        className={`text-xs font-mono tabular-nums font-semibold shrink-0 ${
+                          excludedByMin ? 'line-through text-slate-400' : 'text-slate-900'
+                        }`}
+                      >
                         {formatYen(appYen)}
                       </span>
                     </button>
@@ -281,6 +317,7 @@ export function ExchangeSimulatorView({
                 min={0}
                 step={1000}
                 value={manualYen}
+                placeholder="10000"
                 onChange={(e) => setManualYen(e.target.value)}
                 className="w-full px-3 py-2 text-base font-mono tabular-nums bg-white border border-slate-200 rounded-lg text-slate-900"
               />
