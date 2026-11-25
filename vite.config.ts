@@ -11,8 +11,8 @@ const pkg = JSON.parse(
 export default defineConfig(() => {
   return {
     define: {
-      __APP_VERSION__: JSON.stringify(pkg.version || '1.1.0'),
-      __APP_VERSION_CODE__: Number(process.env.ANDROID_VERSION_CODE || 2),
+      __APP_VERSION__: JSON.stringify(pkg.version || '1.1.1'),
+      __APP_VERSION_CODE__: Number(process.env.ANDROID_VERSION_CODE || 3),
     },
     plugins: [
       react(),

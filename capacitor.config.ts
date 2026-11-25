@@ -8,6 +8,11 @@ const config: CapacitorConfig = {
     CapacitorHttp: {
       enabled: true,
     },
+    SystemBars: {
+      insetsHandling: 'native',
+      style: 'LIGHT',
+      hidden: false,
+    },
   },
 };
 

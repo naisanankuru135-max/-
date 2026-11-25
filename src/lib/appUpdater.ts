@@ -11,9 +11,9 @@ interface ApkUpdaterPlugin {
 const ApkUpdater = registerPlugin<ApkUpdaterPlugin>('ApkUpdater');
 
 export const CURRENT_APP_VERSION =
-  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.1.0';
+  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.1.1';
 export const CURRENT_APP_VERSION_CODE =
-  typeof __APP_VERSION_CODE__ !== 'undefined' ? __APP_VERSION_CODE__ : 2;
+  typeof __APP_VERSION_CODE__ !== 'undefined' ? __APP_VERSION_CODE__ : 3;
 
 export const DEFAULT_GITHUB_REPO = 'naisanankuru135-max/-';
 export const UPDATE_URL_STORAGE_KEY = 'poicho_update_feed_url_v1';

@@ -549,33 +549,35 @@ export default function App() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setScreenshotModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               <ScanLine className="w-3.5 h-3.5" />
-              <span>スクショ読取</span>
+              <span className="sm:hidden">AI読取</span>
+              <span className="hidden sm:inline">スクショ読取</span>
             </button>
 
             {activeTab === 'apps' ? (
               <button
                 type="button"
                 onClick={openAddAppModal}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                アプリを追加
+                <span>アプリ追加</span>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => openTransactionModal()}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                ポイント・案件を記録
+                <span className="sm:hidden">記録</span>
+                <span className="hidden sm:inline">ポイント・案件を記録</span>
               </button>
             )}
           </div>
