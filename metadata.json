@@ -1,0 +1,6 @@
+{
+  "name": "ポイ帳 - ポイ活管理アプリ",
+  "description": "モッピーやハピタス、トリマなど各ポイ活アプリのアイコン画像とともに保有ポイント・円換算額・判定中案件・毎日ルーティンを一元管理できるポイ活管理アプリ。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
