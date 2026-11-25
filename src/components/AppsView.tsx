@@ -18,6 +18,13 @@ import {
   pointsToYen,
 } from '../data/presets';
 import { AppIcon } from './AppIcon';
+import {
+  AppSummaryList,
+  AppViewMode,
+  AppViewModeToggle,
+  getSavedAppViewMode,
+  saveAppViewMode,
+} from './AppSummaryList';
 
 interface AppsViewProps {
   apps: PoikatsuApp[];
@@ -39,6 +46,17 @@ export function AppsView({
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<'all' | AppCategory>('all');
   const [sortKey, setSortKey] = useState<SortKey>('yen_desc');
+  const [appViewMode, setAppViewMode] = useState<AppViewMode>(() => getSavedAppViewMode());
+
+  const handleAppViewModeChange = (nextMode: AppViewMode) => {
+    setAppViewMode(nextMode);
+    saveAppViewMode(nextMode);
+  };
+
+  const totalConfirmedYen = useMemo(
+    () => apps.reduce((sum, app) => sum + pointsToYen(app.confirmedPoints, app.pointsPerYen), 0),
+    [apps]
+  );
 
   const filteredApps = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -72,6 +90,7 @@ export function AppsView({
     { id: 'walk_move', label: '移動・歩数' },
     { id: 'common_point', label: '共通ポイント' },
     { id: 'receipt_survey', label: 'レシート・アンケート' },
+    { id: 'other', label: 'その他' },
   ];
 
   return (
@@ -95,8 +114,8 @@ export function AppsView({
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 md:w-56">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative flex-1 min-w-[160px] md:w-52">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
@@ -117,10 +136,12 @@ export function AppsView({
             <option value="expiry_asc">有効期限が近い順</option>
             <option value="name_asc">アプリ名順</option>
           </select>
+
+          <AppViewModeToggle mode={appViewMode} onChange={handleAppViewModeChange} />
         </div>
       </div>
 
-      {/* App Cards Grid */}
+      {/* App Cards Grid or Compact Summary List */}
       {filteredApps.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
           <p className="text-sm font-medium text-slate-900">条件に一致するアプリがありません</p>
@@ -136,6 +157,14 @@ export function AppsView({
             アプリを追加
           </button>
         </div>
+      ) : appViewMode === 'list' ? (
+        <AppSummaryList
+          apps={filteredApps}
+          totalConfirmedYen={totalConfirmedYen}
+          onSelectApp={onViewHistory}
+          onQuickLog={(appId) => onQuickLog(appId, 'earned')}
+          onEditApp={onEditApp}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filteredApps.map((app) => {

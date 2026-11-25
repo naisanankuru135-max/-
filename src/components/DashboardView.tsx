@@ -18,6 +18,13 @@ import {
   pointsToYen,
 } from '../data/presets';
 import { AppIcon } from './AppIcon';
+import {
+  AppSummaryList,
+  AppViewMode,
+  AppViewModeToggle,
+  getSavedAppViewMode,
+  saveAppViewMode,
+} from './AppSummaryList';
 import { ThirtyDayTrendChart } from './ThirtyDayTrendChart';
 
 interface DashboardViewProps {
@@ -55,6 +62,12 @@ export function DashboardView({
   onFilterLedgerByApp,
 }: DashboardViewProps) {
   const [hoveredMonth, setHoveredMonth] = useState<string | null>(null);
+  const [appViewMode, setAppViewMode] = useState<AppViewMode>(() => getSavedAppViewMode());
+
+  const handleAppViewModeChange = (nextMode: AppViewMode) => {
+    setAppViewMode(nextMode);
+    saveAppViewMode(nextMode);
+  };
 
   const appMap = useMemo(() => {
     const map = new Map<string, PoikatsuApp>();
@@ -230,16 +243,17 @@ export function DashboardView({
 
       {/* Poikatsu Apps Visual Gallery with crisp app icons */}
       <section aria-labelledby="section-apps-gallery" className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 id="section-apps-gallery" className="text-base font-semibold text-slate-900">
               登録ポイ活アプリ
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              各アプリの保有残高と円換算額 · クリックで履歴絞り込み、アイコン変更は編集から行えます
+              各アプリの保有残高と構成比 · タップで履歴絞り込み、編集からアイコン変更可能
             </p>
           </div>
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <AppViewModeToggle mode={appViewMode} onChange={handleAppViewModeChange} />
             <button
               type="button"
               onClick={onAddApp}
@@ -263,7 +277,7 @@ export function DashboardView({
           <div className="bg-white border border-slate-200 rounded-xl p-10 text-center">
             <p className="text-sm font-medium text-slate-900">登録されているポイ活アプリがありません</p>
             <p className="text-xs text-slate-500 mt-1">
-              モッピーやハピタスなどのプリセット、またはお好きなアイコン画像でアプリを追加できます。
+              モッピー・TikTok Lite・ハピタスなどのプリセット、またはお好きなアイコン画像でアプリを追加できます。
             </p>
             <button
               type="button"
@@ -274,6 +288,14 @@ export function DashboardView({
               最初のアプリを追加
             </button>
           </div>
+        ) : appViewMode === 'list' ? (
+          <AppSummaryList
+            apps={sortedApps}
+            totalConfirmedYen={metrics.totalConfirmedYen}
+            onSelectApp={onFilterLedgerByApp}
+            onQuickLog={onQuickLog}
+            onEditApp={onEditApp}
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {sortedApps.map((app) => {
