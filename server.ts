@@ -418,12 +418,12 @@ function createGoogleGenAIClient(cfg: ResolvedProviderConfig): GoogleGenAI {
   }
   if (cfg.provider === 'vertex_express') {
     return new GoogleGenAI({
-      enterprise: true,
+      vertexai: true,
       apiKey: cfg.apiKey,
     });
   }
   return new GoogleGenAI({
-    enterprise: true,
+    vertexai: true,
     project: cfg.project,
     location: cfg.location || 'global',
   });

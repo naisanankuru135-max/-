@@ -78,6 +78,16 @@ async function fetchJsonDirect(url: string, init: RequestInit): Promise<Record<s
   return data;
 }
 
+function createDirectGoogleGenAI(
+  provider: 'gemini' | 'vertex_express',
+  apiKey: string
+): GoogleGenAI {
+  // Note: @google/genai's browser bundle checks `options.vertexai` (not `enterprise`).
+  return provider === 'vertex_express'
+    ? new GoogleGenAI({ vertexai: true, apiKey })
+    : new GoogleGenAI({ apiKey });
+}
+
 export async function testAiDirect(aiConfig: AiRequestConfig): Promise<{
   provider: AiConcreteProviderId;
   model: string;
@@ -85,10 +95,7 @@ export async function testAiDirect(aiConfig: AiRequestConfig): Promise<{
   const cfg = resolveDirectConfig(aiConfig);
 
   if (cfg.provider === 'gemini' || cfg.provider === 'vertex_express') {
-    const ai =
-      cfg.provider === 'gemini'
-        ? new GoogleGenAI({ apiKey: cfg.apiKey })
-        : new GoogleGenAI({ enterprise: true, apiKey: cfg.apiKey });
+    const ai = createDirectGoogleGenAI(cfg.provider, cfg.apiKey);
     await ai.models.generateContent({
       model: cfg.model,
       contents: 'Reply with OK only.',
@@ -205,10 +212,7 @@ export async function parseScreenshotDirect(params: {
   let rawText = '';
 
   if (cfg.provider === 'gemini' || cfg.provider === 'vertex_express') {
-    const ai =
-      cfg.provider === 'gemini'
-        ? new GoogleGenAI({ apiKey: cfg.apiKey })
-        : new GoogleGenAI({ enterprise: true, apiKey: cfg.apiKey });
+    const ai = createDirectGoogleGenAI(cfg.provider, cfg.apiKey);
 
     const response = await ai.models.generateContent({
       model: cfg.model,
