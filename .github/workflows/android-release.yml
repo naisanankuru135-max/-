@@ -1,0 +1,115 @@
+name: Build and Release Android APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'リリースバージョン (例: 1.2.0)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Resolve release version
+        id: ver
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          VERSION_CODE=$(( GITHUB_RUN_NUMBER + 10 ))
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.version='$VERSION';fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
+
+      - name: Install dependencies and build web assets
+        env:
+          ANDROID_VERSION_CODE: ${{ steps.ver.outputs.version_code }}
+        run: |
+          npm install
+          npm run build
+          npx cap sync android
+
+      - name: Prepare Android keystore (if configured)
+        id: sign
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+            echo "has_keystore=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_keystore=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build APK
+        env:
+          ANDROID_VERSION_CODE: ${{ steps.ver.outputs.version_code }}
+          ANDROID_VERSION_NAME: ${{ steps.ver.outputs.version }}
+          ANDROID_STORE_FILE: ${{ steps.sign.outputs.has_keystore == 'true' && 'release.keystore' || '' }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          cd android
+          chmod +x gradlew
+          if [ "${{ steps.sign.outputs.has_keystore }}" = "true" ]; then
+            ./gradlew assembleRelease
+            cp app/build/outputs/apk/release/app-release.apk ../poicho-latest.apk
+          else
+            ./gradlew assembleDebug
+            cp app/build/outputs/apk/debug/app-debug.apk ../poicho-latest.apk
+          fi
+
+      - name: Create version.json manifest
+        shell: bash
+        run: |
+          cat <<EOF > version.json
+          {
+            "version": "${{ steps.ver.outputs.version }}",
+            "versionCode": ${{ steps.ver.outputs.version_code }},
+            "apkUrl": "https://github.com/${{ github.repository }}/releases/download/${{ steps.ver.outputs.tag }}/poicho-latest.apk",
+            "htmlUrl": "https://github.com/${{ github.repository }}/releases/tag/${{ steps.ver.outputs.tag }}",
+            "releaseNotes": "ポイ帳 v${{ steps.ver.outputs.version }} リリース",
+            "publishedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: "ポイ帳 ${{ steps.ver.outputs.tag }}"
+          body: |
+            ポイ帳 Android アプリ ${{ steps.ver.outputs.tag }}（versionCode: ${{ steps.ver.outputs.version_code }}）
+            アプリ内の「目標設定・バックアップ → 更新を確認」から自動アップデートできます。
+          files: |
+            poicho-latest.apk
+            version.json
