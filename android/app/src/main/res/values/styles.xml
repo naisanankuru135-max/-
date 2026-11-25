@@ -1,20 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="AppAlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:background">@color/poicho_surface</item>
+        <item name="android:colorBackground">@color/poicho_surface</item>
+        <item name="colorBackgroundFloating">@color/poicho_surface</item>
+        <item name="android:textColorPrimary">@color/poicho_text_primary</item>
+        <item name="android:textColorSecondary">@color/poicho_text_secondary</item>
+        <item name="android:textColorAlertDialogListItem">@color/poicho_text_primary</item>
+        <item name="textColorAlertDialogListItem">@color/poicho_text_primary</item>
+        <item name="colorAccent">@color/poicho_text_primary</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+    </style>
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">@color/poicho_text_primary</item>
+        <item name="colorPrimaryDark">@color/poicho_surface</item>
+        <item name="colorAccent">@color/poicho_text_primary</item>
+        <item name="android:textColorPrimary">@color/poicho_text_primary</item>
+        <item name="android:textColorSecondary">@color/poicho_text_secondary</item>
+        <item name="android:alertDialogTheme">@style/AppAlertDialogTheme</item>
+        <item name="alertDialogTheme">@style/AppAlertDialogTheme</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowBackground">@color/poicho_surface</item>
+        <item name="android:colorBackground">@color/poicho_surface</item>
+        <item name="colorBackgroundFloating">@color/poicho_surface</item>
+        <item name="colorPrimary">@color/poicho_text_primary</item>
+        <item name="colorPrimaryDark">@color/poicho_surface</item>
+        <item name="colorAccent">@color/poicho_text_primary</item>
+        <item name="android:textColorPrimary">@color/poicho_text_primary</item>
+        <item name="android:textColorSecondary">@color/poicho_text_secondary</item>
+        <item name="android:textColorAlertDialogListItem">@color/poicho_text_primary</item>
+        <item name="textColorAlertDialogListItem">@color/poicho_text_primary</item>
+        <item name="actionModeBackground">@color/poicho_surface</item>
+        <item name="actionMenuTextColor">@color/poicho_text_primary</item>
+        <item name="android:alertDialogTheme">@style/AppAlertDialogTheme</item>
+        <item name="alertDialogTheme">@style/AppAlertDialogTheme</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 </resources>

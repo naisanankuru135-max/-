@@ -7,10 +7,18 @@
 }
 
 @layer base {
+  :root,
   html {
+    color-scheme: light;
     font-family: var(--font-sans);
     color: #0f172a;
     background-color: #f7f8fa;
+  }
+
+  select,
+  option {
+    color: #0f172a;
+    background-color: #ffffff;
   }
 
   button,
