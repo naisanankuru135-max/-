@@ -10,18 +10,19 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    // Keep the app and its native dialogs/selection toolbars consistently in Light mode
-    // so OS Dark Mode or ColorOS ForceDark cannot produce white-on-white popups.
+    // Switch from launch theme before AppCompat/Bridge initialization so no launch
+    // attributes leak into WebView dialogs or text-selection toolbars.
     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+    setTheme(R.style.AppTheme_NoActionBar);
     registerPlugin(ApkUpdaterPlugin.class);
     super.onCreate(savedInstanceState);
   }
 
   @Override
   protected void load() {
-    // Capacitor's BridgeActivity calls setTheme(com.getcapacitor.android.R.style.AppTheme_NoActionBar),
-    // which resolves to Capacitor's dark Theme.AppCompat.NoActionBar under non-transitive R classes.
-    // Re-apply our app's Light theme right before Bridge creates the WebView.
+    // Capacitor's BridgeActivity sets com.getcapacitor.android.R.style.AppTheme_NoActionBar
+    // (which has a dark Theme.AppCompat.NoActionBar parent under non-transitive R classes).
+    // Re-apply our app's Light theme right before Bridge constructs the WebView.
     getApplication().setTheme(R.style.AppTheme_NoActionBar);
     setTheme(R.style.AppTheme_NoActionBar);
     super.load();

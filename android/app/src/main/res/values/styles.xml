@@ -2,7 +2,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="AppAlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="android:background">@color/poicho_surface</item>
         <item name="android:colorBackground">@color/poicho_surface</item>
         <item name="colorBackgroundFloating">@color/poicho_surface</item>
         <item name="android:textColorPrimary">@color/poicho_text_primary</item>
@@ -45,8 +44,9 @@
         <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 
-    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
-        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+    <!-- Use android:windowBackground (never android:background) so the splash drawable
+         never leaks into child views, PopupWindows, or FloatingToolbar menus. -->
+    <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash</item>
     </style>
 </resources>
